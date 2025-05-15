@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class PlayerManager : MonoBehaviour
@@ -38,5 +39,9 @@ public class PlayerManager : MonoBehaviour
    public void Jump()
    {
       animator.SetTrigger("isJumping");
+   }
+   public void ReverseMove()
+   {
+      animator.SetTrigger("isReversing");
    }
 }
