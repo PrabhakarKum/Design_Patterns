@@ -2,15 +2,15 @@ using UnityEngine;
 
 public class JumpCommand : ICommand
 {
-    private PlayerManager playerManager;
+    private PlayerLocomotionManager _playerLocomotionManager;
     
-    public JumpCommand(PlayerManager _playerManager)
+    public JumpCommand(PlayerLocomotionManager playerLocomotionManager)
     {
-        playerManager = _playerManager;
+        _playerLocomotionManager = playerLocomotionManager;
     }
     public void Execute()
     {
-        playerManager.Jump();
+        _playerLocomotionManager.Jump();
     }
 
     public void Undo()

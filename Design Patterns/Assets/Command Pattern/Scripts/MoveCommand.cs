@@ -2,22 +2,24 @@ using UnityEngine;
 
 public class MoveCommand: ICommand
 {
-    private Vector3 direction;
-    private PlayerManager playerManager;
-    public MoveCommand(PlayerManager _playerManager, Vector3 _direction)
+    private readonly Vector3 _direction;
+    private readonly Vector2 _moveInput;
+    private readonly PlayerLocomotionManager _playerLocomotionManager;
+    public MoveCommand(PlayerLocomotionManager playerLocomotionManager, Vector3 direction, Vector2 moveInput)
     {
-        playerManager = _playerManager;
-        direction = _direction;
+        _playerLocomotionManager = playerLocomotionManager;
+        _direction = direction;
+        _moveInput = moveInput;
     }
     
     public void Execute()
     { 
-        playerManager.Move(direction);
+        _playerLocomotionManager.Move(_direction, _moveInput);
     }
     
     public void Undo()
     {
-        playerManager.ReverseMove();
+        _playerLocomotionManager.ReverseMove();
     }
 
 }

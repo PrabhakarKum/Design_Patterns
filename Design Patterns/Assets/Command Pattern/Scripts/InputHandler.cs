@@ -1,52 +1,101 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class InputHandler : MonoBehaviour
 {
-    public PlayerManager player;
-    private PlayerControls playerControls;
-    private ICommand lastCommand = null;
+    public static InputHandler Instance;
+    public PlayerLocomotionManager playerLocomotion;
+    private PlayerControls _playerControls;
+    private ICommand _lastCommand = null;
+    private Vector2 _moveInput;
+    private Vector3 _moveDirection;
+    
+    [Header("CAMERA MOVEMENT INPUT")]
+    [SerializeField] private Vector2 cameraInput;
+    public float cameraVerticalInput;
+    public float cameraHorizontalInput;
     
     private void Awake()
     {
-        playerControls = new PlayerControls();
-        playerControls.Controls.Undo.performed += ctx => UndoLast();
-        playerControls.Controls.Jump.performed += ctx => HandleJump();
-        playerControls.Controls.Move.performed += ctx => HandleMove(ctx.ReadValue<Vector2>());
-        playerControls.Controls.Move.canceled += ctx => player.Stop();
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+        
+        
+        _playerControls = new PlayerControls();
+        _playerControls.Controls.Undo.performed += ctx => UndoLast();
+        _playerControls.Controls.Jump.performed += ctx => HandleJump();
+        _playerControls.Controls.Move.performed += ctx => HandleMove(ctx.ReadValue<Vector2>());
+        _playerControls.Controls.Camera.performed += ctx => cameraInput = ctx.ReadValue<Vector2>();
+        _playerControls.Controls.Move.canceled += ctx =>
+        {
+            
+            playerLocomotion.Stop();
+            _moveInput = Vector2.zero;
+        };
     }
 
     private void OnEnable()
     {
-        playerControls.Enable();
+        _playerControls.Enable();
     }
 
     private void OnDisable()
     {
-        playerControls.Disable();
+        _playerControls.Disable();
+    }
+
+    private void Update()
+    {
+        HandleCameraMovementInput();
+        HandleMoveInput();
     }
 
     private void HandleMove(Vector2 direction)
     {
-        Vector3 moveDir = new Vector3(direction.x, 0, direction.y).normalized;
-        ICommand moveCommand = new MoveCommand(player, moveDir);
-        moveCommand.Execute();
-        lastCommand = moveCommand;
+        _moveInput = direction;
+    }
+
+    private void HandleMoveInput()
+    {
+        if (_moveInput != Vector2.zero)
+        {
+            _moveDirection = PlayerCamera.Instance.transform.forward * _moveInput.y ; 
+            _moveDirection += PlayerCamera.Instance.transform.right * _moveInput.x; 
+            _moveDirection.Normalize();
+            _moveDirection.y = 0;
+        
+            ICommand moveCommand = new MoveCommand(playerLocomotion, _moveDirection, _moveInput);
+            moveCommand.Execute();
+            _lastCommand = moveCommand;
+        }
+    }
+    
+    private void HandleCameraMovementInput()
+    {
+        cameraVerticalInput = cameraInput.y;
+        cameraHorizontalInput = cameraInput.x;
     }
 
     private void UndoLast()
     {
-        if (lastCommand != null)
+        if (_lastCommand != null)
         {
-            lastCommand.Undo();
-            lastCommand = null;  // clear to prevent multiple undo's
+            _lastCommand.Undo();
+            _lastCommand = null;
         }
     }
 
     private void HandleJump()
     {
-        ICommand jumpCommand = new JumpCommand(player);
+        ICommand jumpCommand = new JumpCommand(playerLocomotion);
         jumpCommand.Execute();
     }
 }
